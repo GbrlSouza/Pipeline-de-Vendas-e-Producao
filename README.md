@@ -43,5 +43,5 @@ pipeline-project/
 │   ├── schema.sql             # Script para criar tabelas
 │   ├── seed.sql               # Script para popular tabelas (dados iniciais)
 ├── README.md                  # Documentação geral do projeto
-├── LICENSE.txt
+├── LICENSE
 ```
