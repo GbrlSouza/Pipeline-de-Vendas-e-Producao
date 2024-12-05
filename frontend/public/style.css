@@ -1,0 +1,18 @@
+body {
+  font-family: Arial, sans-serif;
+  margin: 0;
+  padding: 0;
+  text-align: center;
+}
+
+h1 {
+  background-color: #007bff;
+  color: white;
+  padding: 10px 0;
+}
+
+#Gantt,
+#Grid {
+  margin: 20px auto;
+  width: 80%;
+}
