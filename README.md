@@ -3,22 +3,24 @@
 - Localhost | PHPMyAdmin | XAMPP
 
 ```mysql
-CREATE DATABASE pipeline_db;
-
-USE pipeline_db;
-
 CREATE TABLE tasks (
     id INT AUTO_INCREMENT PRIMARY KEY,
-    title VARCHAR(255) NOT NULL,
-    description TEXT,
-    status ENUM('Prospecção', 'Negociação', 'Produção', 'Entrega') NOT NULL,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    name VARCHAR(255) NOT NULL,
+    stage ENUM('Prospecção', 'Negociação', 'Produção', 'Entrega') NOT NULL,
+    start_date DATE NOT NULL,
+    end_date DATE NOT NULL,
+    status ENUM('Pendente', 'Em Andamento', 'Concluído') DEFAULT 'Pendente'
 );
+
+INSERT INTO tasks (task_name, stage, start_date, end_date, status)
+VALUES 
+('Contato inicial', 'Prospecção', '2024-12-01', '2024-12-03', 'Pendente'),
+('Negociação de contrato', 'Negociação', '2024-12-04', '2024-12-05', 'Em Andamento');
 ```
 
 - Estrutura do projeto
 
-```
+```bash
 pipeline-project/
 │
 ├── backend/                       # Backend do projeto
@@ -53,3 +55,4 @@ pipeline-project/
 │
 ├── README.md                      # Documentação geral do projeto
 └── LICENSE                        # Licensa do projeto
+```
