@@ -10,6 +10,7 @@ fetchTasks().then((tasks) => {
     StartDate: new Date(task.start_date),
     EndDate: new Date(task.end_date),
     Status: task.status,
+    Progress: task.progress,
   }));
 
   const gantt = new ej.gantt.Gantt({
@@ -31,6 +32,18 @@ fetchTasks().then((tasks) => {
       endDate: 'EndDate',
       progress: 'Progress',
     },
+    progressBarTemplate: function (data) {
+      let progress = data.Progress;
+      let color = 'red';
+
+      if (progress >= 34 && progress <= 66) {
+        color = 'yellow';
+      } else if (progress > 66) {
+        color = 'green';
+      }
+
+      return `<div class="progress-bar" style="background-color: ${color}; width: ${progress}%; height: 100%;"></div>`;
+    },
     actionBegin: function (args) {
       if (args.requestType === 'beforeSave') {
         fetch(`http://localhost:3000/update-task`, {
@@ -38,9 +51,35 @@ fetchTasks().then((tasks) => {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(args.data),
         })
-        .then(response => response.json())
-        .then(data => console.log('Tarefa atualizada', data))
-        .catch(error => console.error('Erro ao salvar:', error));
+          .then(response => response.json())
+          .then(data => {
+            console.log('Tarefa atualizada', data);
+            fetchTasks().then((tasks) => {
+              gantt.dataSource = tasks.map(task => ({
+                TaskID: task.id,
+                TaskName: task.name,
+                StartDate: new Date(task.start_date),
+                EndDate: new Date(task.end_date),
+                Status: task.status,
+                Progress: task.progress,
+              }));
+            });
+          })
+          .catch(error => console.error('Erro ao salvar:', error));
+      }
+    },
+    actionComplete: function (args) {
+      if (args.requestType === 'cancel') {
+        fetchTasks().then((tasks) => {
+          gantt.dataSource = tasks.map(task => ({
+            TaskID: task.id,
+            TaskName: task.name,
+            StartDate: new Date(task.start_date),
+            EndDate: new Date(task.end_date),
+            Status: task.status,
+            Progress: task.progress,
+          }));
+        });
       }
     }
   });
@@ -64,7 +103,8 @@ const grid = new ej.grids.Grid({
     { field: 'stage', headerText: 'Fase', textAlign: 'Left', width: 150 },
     { field: 'start_date', headerText: 'Data de Início', textAlign: 'Left', type: 'date', format: 'yMd', width: 150, editType: 'datepickeredit' },
     { field: 'end_date', headerText: 'Data de Término', textAlign: 'Left', type: 'date', format: 'yMd', width: 150, editType: 'datepickeredit' },
-    { field: 'status', headerText: 'Status', textAlign: 'Left', width: 150 }
+    { field: 'status', headerText: 'Status', textAlign: 'Left', width: 150 },
+    { field: 'progress', headerText: 'Progresso', width: 150 }
   ],
   actionBegin: function (args) {
     if (args.requestType === 'save') {
@@ -73,9 +113,37 @@ const grid = new ej.grids.Grid({
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(args.data),
       })
-      .then(response => response.json())
-      .then(data => console.log('Tarefa salva no grid', data))
-      .catch(error => console.error('Erro ao salvar:', error));
+        .then(response => response.json())
+        .then(data => {
+          console.log('Tarefa salva no grid', data);
+          fetchTasks().then((tasks) => {
+            grid.dataSource = tasks.map(task => ({
+              id: task.id,
+              name: task.name,
+              stage: task.stage,
+              start_date: new Date(task.start_date),
+              end_date: new Date(task.end_date),
+              status: task.status,
+              progress: task.progress,
+            }));
+          });
+        })
+        .catch(error => console.error('Erro ao salvar:', error));
+    }
+  },
+  actionComplete: function (args) {
+    if (args.requestType === 'cancel') {
+      fetchTasks().then((tasks) => {
+        grid.dataSource = tasks.map(task => ({
+          id: task.id,
+          name: task.name,
+          stage: task.stage,
+          start_date: new Date(task.start_date),
+          end_date: new Date(task.end_date),
+          status: task.status,
+          progress: task.progress,
+        }));
+      });
     }
   }
 });
@@ -90,5 +158,6 @@ fetchTasks().then((tasks) => {
     start_date: new Date(task.start_date),
     end_date: new Date(task.end_date),
     status: task.status,
+    progress: task.progress,
   }));
 });
