@@ -12,17 +12,40 @@ fetchTasks().then((tasks) => {
     Status: task.status,
   }));
 
-  new ej.gantt.Gantt({
+  const gantt = new ej.gantt.Gantt({
     dataSource: ganttData,
     height: '400px',
-    
+    allowEditing: true,
+    allowTaskbarEditing: true,
+    editSettings: {
+      allowEditing: true,
+      allowAdding: true,
+      allowDeleting: true,
+      mode: 'Dialog',
+    },
+    toolbar: ['Add', 'Edit', 'Update', 'Cancel', 'Delete'],
     taskFields: {
       id: 'TaskID',
       name: 'TaskName',
       startDate: 'StartDate',
       endDate: 'EndDate',
+      progress: 'Progress',
     },
-  }).appendTo('#Gantt');
+    actionBegin: function (args) {
+      if (args.requestType === 'beforeSave') {
+        fetch(`http://localhost:3000/update-task`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(args.data),
+        })
+        .then(response => response.json())
+        .then(data => console.log('Tarefa atualizada', data))
+        .catch(error => console.error('Erro ao salvar:', error));
+      }
+    }
+  });
+
+  gantt.appendTo('#Gantt');
 });
 
 const grid = new ej.grids.Grid({
@@ -32,9 +55,8 @@ const grid = new ej.grids.Grid({
     allowEditing: true,
     allowAdding: true,
     allowDeleting: true,
-    mode: 'Dialog'
+    mode: 'Dialog',
   },
-
   toolbar: ['Add', 'Edit', 'Delete', 'Update', 'Cancel'],
   columns: [
     { field: 'id', headerText: 'ID', isPrimaryKey: true, textAlign: 'Right', width: 100 },
@@ -43,7 +65,19 @@ const grid = new ej.grids.Grid({
     { field: 'start_date', headerText: 'Data de Início', textAlign: 'Left', type: 'date', format: 'yMd', width: 150, editType: 'datepickeredit' },
     { field: 'end_date', headerText: 'Data de Término', textAlign: 'Left', type: 'date', format: 'yMd', width: 150, editType: 'datepickeredit' },
     { field: 'status', headerText: 'Status', textAlign: 'Left', width: 150 }
-  ]
+  ],
+  actionBegin: function (args) {
+    if (args.requestType === 'save') {
+      fetch('http://localhost:3000/update-task', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(args.data),
+      })
+      .then(response => response.json())
+      .then(data => console.log('Tarefa salva no grid', data))
+      .catch(error => console.error('Erro ao salvar:', error));
+    }
+  }
 });
 
 grid.appendTo('#Grid');
@@ -55,6 +89,6 @@ fetchTasks().then((tasks) => {
     stage: task.stage,
     start_date: new Date(task.start_date),
     end_date: new Date(task.end_date),
-    status: task.status
+    status: task.status,
   }));
 });
