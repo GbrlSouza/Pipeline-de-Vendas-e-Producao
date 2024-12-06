@@ -17,6 +17,7 @@ function initializeGantt(tasks) {
     EndDate: new Date(task.end_date),
     Status: task.status,
     Progress: task.progress,
+    unemployment_rate: task.unemployment_rate || 0
   }));
 
   const gantt = new ej.gantt.Gantt({
@@ -37,18 +38,16 @@ function initializeGantt(tasks) {
       startDate: 'StartDate',
       endDate: 'EndDate',
       progress: 'Progress',
+      unemployment_rate: 'UnemploymentRate',
     },
     enableVirtualization: true,
     enableTimelineVirtualization: true,
     columns: [
-      { field: 'TaskName', headerText: 'Task Name', width: '150' },
-      { field: 'StartDate', headerText: 'Start Date', width: '120', format: 'yMd' },
-      { field: 'EndDate', headerText: 'End Date', width: '120', format: 'yMd' },
-      { field: 'Progress', headerText: 'Progress', width: '100' },
-      {
-        field: 'unemployment', headerText: 'Unemployment Rate', allowFiltering: false,
-        template: '#unemploymentTemplate', width: 170
-      },
+      { field: 'TaskName', headerText: 'Task Name', width: '130' },
+      { field: 'StartDate', headerText: 'Start Date', width: '110', format: 'yMd' },
+      { field: 'EndDate', headerText: 'End Date', width: '110', format: 'yMd' },
+      { field: 'Progress', headerText: 'Progress', width: '75' },
+      { field: 'unemployment_rate', headerText: 'Unemployment Rate', allowFiltering: true, width: 75 },
     ],
   });
 
@@ -64,7 +63,7 @@ function initializeGrid(tasks) {
     end_date: new Date(task.end_date),
     status: task.status,
     progress: task.progress || 0,
-    unemployment_rate: task.unemployment_rate || 0,
+    unemployment_rate: task.unemployment_rate || 0
   }));
 
   const grid = new ej.grids.Grid({
@@ -85,10 +84,7 @@ function initializeGrid(tasks) {
       { field: 'end_date', headerText: 'Data de Término', textAlign: 'center', type: 'date', format: 'yMd', width: 150, editType: 'datepickeredit' },
       { field: 'status', headerText: 'Status', textAlign: 'center', width: 150 },
       { field: 'progress', headerText: 'Progresso', width: 150 },
-      {
-        field: 'unemployment', headerText: 'Unemployment Rate', allowFiltering: false,
-        template: '#unemploymentTemplate', width: 170
-      },
+      { field: 'unemployment_rate', headerText: 'Unemployment Rate', allowFiltering: false, width: 170 },
     ],
     actionBegin: async function (args) {
       if (args.requestType === 'save') {
