@@ -1,14 +1,12 @@
 const db = require('../config/db');
 
-exports.getAllTasks = (callback) => {
-  db.query('SELECT * FROM tasks', callback);
-};
+exports.getAllTasks = (callback) => { db.query('SELECT * FROM tasks', callback); };
 
-exports.addTask = (task, callback) => {
-  const { name, stage, start_date, end_date, status } = task;
+exports.updateTask = (id, task, callback) => {
+  const { name, stage, start_date, end_date, status, progress } = task;
   db.query(
-    'INSERT INTO tasks (name, stage, start_date, end_date, status) VALUES (?, ?, ?, ?, ?)',
-    [name, stage, start_date, end_date, status],
+    'UPDATE tasks SET name = ?, stage = ?, start_date = ?, end_date = ?, status = ?, progress = ? WHERE id = ?',
+    [name, stage, start_date, end_date, status, progress, id],
     callback
   );
 };

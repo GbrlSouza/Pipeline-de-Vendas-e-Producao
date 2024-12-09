@@ -8,5 +8,6 @@ CREATE TABLE tasks (
     stage ENUM('Prospecção', 'Negociação', 'Produção', 'Entrega') NOT NULL,
     start_date DATE NOT NULL,
     end_date DATE NOT NULL,
-    status ENUM('Pendente', 'Em Andamento', 'Concluído') DEFAULT 'Pendente'
+    status ENUM('Pendente', 'Em Andamento', 'Concluído') DEFAULT 'Pendente',
+    progress DECIMAL(5, 2)
 );

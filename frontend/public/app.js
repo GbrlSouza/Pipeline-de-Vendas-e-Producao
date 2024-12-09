@@ -1,125 +1,155 @@
-async function fetchTasks() {
-  try {
-    const response = await fetch('http://localhost:3000/tasks');
-    if (!response.ok) throw new Error('Erro ao buscar tarefas');
-    return await response.json();
-  } catch (error) {
-    console.error('Erro ao buscar dados:', error);
-    return [];
+document.addEventListener("DOMContentLoaded", () => {
+  const API_URL = "http://localhost:3000/tasks";
+
+  async function fetchTasks() {
+    try {
+      const response = await fetch(API_URL);
+      const data = await response.json();
+      return mapTasks(data);
+    } catch (error) {
+      console.error("Erro ao buscar tarefas:", error);
+      showError("Erro ao carregar as tarefas. Tente novamente.");
+      return [];
+    }
   }
-}
 
-function initializeGantt(tasks) {
-  const ganttData = tasks.map((task) => ({
-    TaskID: task.id,
-    TaskName: task.name,
-    StartDate: new Date(task.start_date),
-    EndDate: new Date(task.end_date),
-    Status: task.status,
-    Progress: task.progress,
-    unemployment_rate: task.unemployment_rate || 0
-  }));
+  function mapTasks(tasks) {
+    return tasks.map((task) => ({
+      TaskID: task.id,
+      TaskName: task.name,
+      StartDate: new Date(task.start_date),
+      EndDate: new Date(task.end_date),
+      Progress: task.progress,
+      Status: task.status,
+    }));
+  }
 
-  const gantt = new ej.gantt.Gantt({
-    dataSource: ganttData,
-    height: '400px',
-    allowEditing: true,
-    allowTaskbarEditing: true,
-    editSettings: {
-      allowEditing: true,
-      allowAdding: true,
-      allowDeleting: true,
-      mode: 'Dialog',
-    },
-    toolbar: ['Add', 'Edit', 'Update', 'Cancel', 'Delete'],
-    taskFields: {
-      id: 'TaskID',
-      name: 'TaskName',
-      startDate: 'StartDate',
-      endDate: 'EndDate',
-      progress: 'Progress',
-      unemployment_rate: 'UnemploymentRate',
-    },
-    enableVirtualization: true,
-    enableTimelineVirtualization: true,
-    columns: [
-      { field: 'TaskName', headerText: 'Task Name', width: '130' },
-      { field: 'StartDate', headerText: 'Start Date', width: '110', format: 'yMd' },
-      { field: 'EndDate', headerText: 'End Date', width: '110', format: 'yMd' },
-      { field: 'Progress', headerText: 'Progress', width: '75' },
-      { field: 'unemployment_rate', headerText: 'Unemployment Rate', allowFiltering: true, width: 75 },
-    ],
-  });
+  async function saveTask(task) {
+    try {
+      const response = await fetch(API_URL, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(task),
+      });
+      if (!response.ok) throw new Error("Erro ao salvar a tarefa");
+      location.reload();
+      return await response.json();
+    } catch (error) {
+      console.error("Erro ao salvar a tarefa:", error);
+      showError("Erro ao salvar a tarefa. Tente novamente.");
+    }
+  }
 
-  gantt.appendTo('#Gantt');
-}
+  function showError(message) {
+    const errorDiv = document.getElementById("error-message");
+    if (errorDiv) {
+      errorDiv.innerText = message;
+      errorDiv.style.display = "block";
+      setTimeout(() => (errorDiv.style.display = "none"), 5000);
+    }
+  }
 
-function initializeGrid(tasks) {
-  const gridData = tasks.map((task) => ({
-    id: task.id,
-    name: task.name,
-    stage: task.stage,
-    start_date: new Date(task.start_date),
-    end_date: new Date(task.end_date),
-    status: task.status,
-    progress: task.progress || 0,
-    unemployment_rate: task.unemployment_rate || 0
-  }));
+  async function initializeGantt() {
+    const tasks = await fetchTasks();
+    const currentYear = new Date().getFullYear();
 
-  const grid = new ej.grids.Grid({
-    dataSource: gridData,
-    allowPaging: true,
-    editSettings: {
-      allowEditing: true,
-      allowAdding: true,
-      allowDeleting: true,
-      mode: 'Dialog',
-    },
-    toolbar: ['Add', 'Edit', 'Delete', 'Update', 'Cancel'],
-    columns: [
-      { field: 'id', headerText: 'ID', isPrimaryKey: true, textAlign: 'center', width: 100 },
-      { field: 'name', headerText: 'Tarefa', textAlign: 'center', width: 200 },
-      { field: 'stage', headerText: 'Fase', textAlign: 'center', width: 150 },
-      { field: 'start_date', headerText: 'Data de Início', textAlign: 'center', type: 'date', format: 'yMd', width: 150, editType: 'datepickeredit' },
-      { field: 'end_date', headerText: 'Data de Término', textAlign: 'center', type: 'date', format: 'yMd', width: 150, editType: 'datepickeredit' },
-      { field: 'status', headerText: 'Status', textAlign: 'center', width: 150 },
-      { field: 'progress', headerText: 'Progresso', width: 150 },
-      { field: 'unemployment_rate', headerText: 'Unemployment Rate', allowFiltering: false, width: 170 },
-    ],
-    actionBegin: async function (args) {
-      if (args.requestType === 'save') {
-        try {
-          const response = await fetch('http://localhost:3000/update-task', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(args.data),
-          });
+    const gantt = new ej.gantt.Gantt({
+      dataSource: tasks,
+      height: "350px",
+      width: "100%",
+      toolbar: ["Add", "Edit", "Delete", "Update", "Cancel"],
+      rowHeight: 30,
+      taskFields: {
+        id: "TaskID",
+        name: "TaskName",
+        startDate: "StartDate",
+        endDate: "EndDate",
+        progress: "Progress",
+        status: "Status",
+      },
+      editSettings: {
+        allowEditing: true,
+        allowAdding: true,
+        allowDeleting: true,
+      },
+      highlightWeekends: true,
+      includeWeekend: true,
+      gridLines: "Both",
+      holidays: [
+        { from: `${currentYear}-01-02`, label: "Ano Novo", textAlign: "center" },
+        { from: `${currentYear + 1}-01-01`, label: "Fim do Ano", textAlign: "center" },
+      ],
+      columns: [
+        { field: "TaskID", headerText: "ID", textAlign: "Left" },
+        { field: "TaskName", headerText: "Tarefa", textAlign: "Left" },
+        { field: "StartDate", headerText: "Início", textAlign: "Left" },
+        { field: "EndDate", headerText: "Fim", textAlign: "Left" },
+        { field: "Progress", headerText: "Progresso (%)", textAlign: "Left" },
+        { field: "Status", headerText: "Status", textAlign: "Left" },
+      ],
+      actionBegin: async (args) => {
+        if (args.requestType === "save") {
+          const updatedTask = {
+            id: args.data.TaskID,
+            name: args.data.TaskName,
+            start_date: args.data.StartDate,
+            end_date: args.data.EndDate,
+            progress: args.data.Progress,
+            status: args.data.Status,
+          };
 
-          if (!response.ok) throw new Error('Erro ao atualizar tarefa');
-
-          console.log('Tarefa salva com sucesso');
-          const updatedTasks = await fetchTasks();
-          grid.dataSource = updatedTasks.map((task) => ({
-            id: task.id,
-            name: task.name,
-            stage: task.stage,
-            start_date: new Date(task.start_date),
-            end_date: new Date(task.end_date),
-            status: task.status,
-            progress: task.progress || 0,
-            unemployment_rate: task.unemployment_rate || 0,
-          }));
-        } catch (error) {
-          console.error('Erro ao salvar tarefa:', error);
+          await saveTask(updatedTask);
         }
-      }
-    },
-  });
+      },
+    });
 
-  grid.appendTo('#Grid');
-}
+    gantt.appendTo("#GanttContainer");
+  }
 
-fetchTasks().then((tasks) => {
-  initializeGantt(tasks);
-  initializeGrid(tasks);
+  async function initializeGrid() {
+    const tasks = await fetchTasks();
+
+    const grid = new ej.grids.Grid({
+      dataSource: tasks,
+      height: "300px",
+      rowHeight: 30,
+      allowPaging: true,
+      pageSettings: { pageSize: 7 },
+      toolbar: ["Add", "Edit", "Delete", "Update", "Cancel"],
+      editSettings: {
+        allowEditing: true,
+        allowAdding: true,
+        allowDeleting: true,
+        mode: "Normal",
+        locale: "pt-BR",
+      },
+      columns: [
+        { field: "TaskID", headerText: "ID", isPrimaryKey: true, width: 30, textAlign: "Left" },
+        { field: "TaskName", headerText: "Tarefa", width: 100, textAlign: "Left" },
+        { field: "StartDate", headerText: "Início", type: "date", editType: "datepickeredit", format: "yMd", textAlign: "Left", width: 100 },
+        { field: "EndDate", editType: "datepickeredit", headerText: "Fim", type: "date", format: "yMd", textAlign: "Left", width: 100 },
+        { field: "Progress", headerText: "Progresso (%)", type: "number", textAlign: "Left", width: 100 },
+        { field: "Status", headerText: "Status", textAlign: "Left", width: 100 },
+      ],
+      actionBegin: async (args) => {
+        if (args.requestType === "save") {
+          const updatedTask = {
+            id: args.data.TaskID,
+            name: args.data.TaskName,
+            start_date: args.data.StartDate,
+            end_date: args.data.EndDate,
+            progress: args.data.Progress,
+            status: args.data.Status,
+          };
+
+          await saveTask(updatedTask);
+        }
+      },
+    });
+
+    grid.appendTo("#GridContainer");
+  }
+
+  initializeGantt();
+  initializeGrid();
 });
