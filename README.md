@@ -9,19 +9,21 @@ CREATE TABLE tasks (
     stage ENUM('Prospecção', 'Negociação', 'Produção', 'Entrega') NOT NULL,
     start_date DATE NOT NULL,
     end_date DATE NOT NULL,
-    status ENUM('Pendente', 'Em Andamento', 'Concluído') DEFAULT 'Pendente'
+    status ENUM('Pendente', 'Em Andamento', 'Concluído') DEFAULT 'Pendente',
+    progress DECIMAL(5, 2)
 );
 
 INSERT INTO tasks (task_name, stage, start_date, end_date, status)
 VALUES 
-('Contato inicial', 'Prospecção', '2024-12-01', '2024-12-03', 'Pendente'),
-('Negociação de contrato', 'Negociação', '2024-12-04', '2024-12-05', 'Em Andamento');
+('Contato inicial', 'Prospecção', '2024-12-01', '2024-12-03', 'Pendente', 80),
+('Negociação de contrato', 'Negociação', '2024-12-04', '2024-12-05', 'Em Andamento', 60);
 ```
 
 - Estrutura do projeto
 
 ```bash
 pipeline-project/
+
 │
 ├── backend/                       # Backend do projeto
 │   ├── index.js                   # Arquivo principal do servidor
