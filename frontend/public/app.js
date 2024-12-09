@@ -16,8 +16,7 @@ function initializeGantt(tasks) {
     StartDate: new Date(task.start_date),
     EndDate: new Date(task.end_date),
     Status: task.status,
-    Progress: task.progress,
-    unemployment_rate: task.unemployment_rate || 0
+    Progress: task.progress || 0,
   }));
 
   const gantt = new ej.gantt.Gantt({
@@ -29,7 +28,6 @@ function initializeGantt(tasks) {
       allowEditing: true,
       allowAdding: true,
       allowDeleting: true,
-      mode: 'Dialog',
     },
     toolbar: ['Add', 'Edit', 'Update', 'Cancel', 'Delete'],
     taskFields: {
@@ -38,17 +36,55 @@ function initializeGantt(tasks) {
       startDate: 'StartDate',
       endDate: 'EndDate',
       progress: 'Progress',
-      unemployment_rate: 'UnemploymentRate',
+      status: 'Status',
     },
-    enableVirtualization: true,
-    enableTimelineVirtualization: true,
     columns: [
-      { field: 'TaskName', headerText: 'Task Name', width: '130' },
-      { field: 'StartDate', headerText: 'Start Date', width: '110', format: 'yMd' },
-      { field: 'EndDate', headerText: 'End Date', width: '110', format: 'yMd' },
-      { field: 'Progress', headerText: 'Progress', width: '75' },
-      { field: 'unemployment_rate', headerText: 'Unemployment Rate', allowFiltering: true, width: 75 },
+      { field: 'TaskName', headerText: 'Task Name', width: '100', editType: 'stringedit', textAlign: 'left' },
+      { field: 'StartDate', headerText: 'Start Date', width: '75', format: 'yMd', editType: 'datepickeredit', textAlign: 'left' },
+      { field: 'EndDate', headerText: 'End Date', width: '75', format: 'yMd', editType: 'datepickeredit', textAlign: 'left' },
+      { field: 'Progress', headerText: 'Progress (%)', width: '75', editType: 'numericedit', textAlign: 'left' },
     ],
+    actionBegin: async function (args) {
+      if (args.requestType === 'save') {
+        try {
+          const updatedTask = {
+            id: args.data.TaskID,
+            name: args.data.TaskName,
+            start_date: args.data.StartDate,
+            end_date: args.data.EndDate,
+            progress: args.data.Progress,
+            status: args.data.Status,
+          };
+
+          const response = await fetch('http://localhost:3000/update-task', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(updatedTask),
+          });
+
+          if (!response.ok) throw new Error('Erro ao atualizar tarefa');
+          console.log('Tarefa atualizada com sucesso:', updatedTask);
+        } catch (error) {
+          console.error('Erro ao salvar tarefa:', error);
+        }
+      }
+    },
+    actionComplete: async function (args) {
+      if (args.requestType === 'save') {
+        console.log('Edição concluída:', args.data);
+
+        const updatedTasks = await fetchTasks();
+        this.dataSource = updatedTasks.map((task) => ({
+          TaskID: task.id,
+          TaskName: task.name,
+          StartDate: new Date(task.start_date),
+          EndDate: new Date(task.end_date),
+          Progress: task.progress || 0,
+          Status: task.status,
+        }));
+      }
+    },
+
   });
 
   gantt.appendTo('#Gantt');
@@ -63,7 +99,6 @@ function initializeGrid(tasks) {
     end_date: new Date(task.end_date),
     status: task.status,
     progress: task.progress || 0,
-    unemployment_rate: task.unemployment_rate || 0
   }));
 
   const grid = new ej.grids.Grid({
@@ -73,7 +108,7 @@ function initializeGrid(tasks) {
       allowEditing: true,
       allowAdding: true,
       allowDeleting: true,
-      mode: 'Dialog',
+      mode: 'Normal',
     },
     toolbar: ['Add', 'Edit', 'Delete', 'Update', 'Cancel'],
     columns: [
@@ -84,7 +119,6 @@ function initializeGrid(tasks) {
       { field: 'end_date', headerText: 'Data de Término', textAlign: 'center', type: 'date', format: 'yMd', width: 150, editType: 'datepickeredit' },
       { field: 'status', headerText: 'Status', textAlign: 'center', width: 150 },
       { field: 'progress', headerText: 'Progresso', width: 150 },
-      { field: 'unemployment_rate', headerText: 'Unemployment Rate', allowFiltering: false, width: 170 },
     ],
     actionBegin: async function (args) {
       if (args.requestType === 'save') {
@@ -107,7 +141,6 @@ function initializeGrid(tasks) {
             end_date: new Date(task.end_date),
             status: task.status,
             progress: task.progress || 0,
-            unemployment_rate: task.unemployment_rate || 0,
           }));
         } catch (error) {
           console.error('Erro ao salvar tarefa:', error);
