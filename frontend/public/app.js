@@ -1,52 +1,97 @@
-async function fetchTasks() {
-  try {
-    const response = await fetch('http://localhost:3000/tasks');
-    if (!response.ok) throw new Error('Erro ao buscar tarefas');
-    return await response.json();
-  } catch (error) {
-    console.error('Erro ao buscar dados:', error);
-    return [];
+document.addEventListener("DOMContentLoaded", () => {
+  const API_URL = "http://localhost:3000/tasks";
+
+  async function fetchTasks() {
+    try {
+      const response = await fetch(API_URL);
+      const data = await response.json();
+      return mapTasks(data);
+    } catch (error) {
+      console.error("Erro ao buscar tarefas:", error);
+      showError("Erro ao carregar as tarefas. Tente novamente.");
+      return [];
+    }
   }
-}
 
-function initializeGantt(tasks) {
-  const ganttData = tasks.map((task) => ({
-    TaskID: task.id,
-    TaskName: task.name,
-    StartDate: new Date(task.start_date),
-    EndDate: new Date(task.end_date),
-    Status: task.status,
-    Progress: task.progress || 0,
-  }));
+  function mapTasks(tasks) {
+    return tasks.map((task) => ({
+      TaskID: task.id,
+      TaskName: task.name,
+      StartDate: new Date(task.start_date),
+      EndDate: new Date(task.end_date),
+      Progress: task.progress || 0,
+      Status: task.status,
+    }));
+  }
 
-  const gantt = new ej.gantt.Gantt({
-    dataSource: ganttData,
-    height: '400px',
-    allowEditing: true,
-    allowTaskbarEditing: true,
-    editSettings: {
-      allowEditing: true,
-      allowAdding: true,
-      allowDeleting: true,
-    },
-    toolbar: ['Add', 'Edit', 'Update', 'Cancel', 'Delete'],
-    taskFields: {
-      id: 'TaskID',
-      name: 'TaskName',
-      startDate: 'StartDate',
-      endDate: 'EndDate',
-      progress: 'Progress',
-      status: 'Status',
-    },
-    columns: [
-      { field: 'TaskName', headerText: 'Task Name', width: '100', editType: 'stringedit', textAlign: 'left' },
-      { field: 'StartDate', headerText: 'Start Date', width: '75', format: 'yMd', editType: 'datepickeredit', textAlign: 'left' },
-      { field: 'EndDate', headerText: 'End Date', width: '75', format: 'yMd', editType: 'datepickeredit', textAlign: 'left' },
-      { field: 'Progress', headerText: 'Progress (%)', width: '75', editType: 'numericedit', textAlign: 'left' },
-    ],
-    actionBegin: async function (args) {
-      if (args.requestType === 'save') {
-        try {
+  async function saveTask(task) {
+    try {
+      const response = await fetch(API_URL, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(task),
+      });
+      if (!response.ok) throw new Error("Erro ao salvar a tarefa");
+      return await response.json();
+    } catch (error) {
+      console.error("Erro ao salvar a tarefa:", error);
+      showError("Erro ao salvar a tarefa. Tente novamente.");
+    }
+  }
+
+  function showError(message) {
+    const errorDiv = document.getElementById("error-message");
+    if (errorDiv) {
+      errorDiv.innerText = message;
+      errorDiv.style.display = "block";
+      setTimeout(() => (errorDiv.style.display = "none"), 5000);
+    }
+  }
+
+  async function initializeGantt() {
+    const tasks = await fetchTasks();
+    const currentYear = new Date().getFullYear();
+
+    const gantt = new ej.gantt.Gantt({
+      dataSource: tasks,
+      height: "400px",
+      width: "100%",
+      rowHeight: 50,
+      taskFields: {
+        id: "TaskID",
+        name: "TaskName",
+        startDate: "StartDate",
+        endDate: "EndDate",
+        progress: "Progress",
+        status: "Status",
+      },
+      editSettings: {
+        allowEditing: true,
+        allowAdding: true,
+        allowDeleting: true,
+      },
+      timelineSettings: {
+        topTier: { unit: "Month", format: "MMM yyyy" },
+        bottomTier: { unit: "Week", format: "dd MMM" },
+      },
+      highlightWeekends: true,
+      workWeek: ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"],
+      includeWeekend: false,
+      gridLines: "Both",
+      holidays: [
+        { from: `${currentYear}-01-01`, label: "Ano Novo", cssClass: "holiday" },
+        { from: `${currentYear}-12-31`, label: "Fim do Ano", cssClass: "holiday" },
+      ],
+      columns: [
+        { field: "TaskID", headerText: "ID", textAlign: "Left" },
+        { field: "TaskName", headerText: "Tarefa", textAlign: "Left" },
+        { field: "StartDate", headerText: "Início", textAlign: "Left" },
+        { field: "EndDate", headerText: "Fim", textAlign: "Left" },
+        { field: "Progress", headerText: "Progresso (%)", textAlign: "Left" },
+        { field: "Status", headerText: "Status", textAlign: "Left" },
+      ],
+      actionBegin: async (args) => {
+        if (args.requestType === "save") {
           const updatedTask = {
             id: args.data.TaskID,
             name: args.data.TaskName,
@@ -55,104 +100,75 @@ function initializeGantt(tasks) {
             progress: args.data.Progress,
             status: args.data.Status,
           };
-
-          const response = await fetch('http://localhost:3000/update-task', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(updatedTask),
-          });
-
-          if (!response.ok) throw new Error('Erro ao atualizar tarefa');
-          console.log('Tarefa atualizada com sucesso:', updatedTask);
-        } catch (error) {
-          console.error('Erro ao salvar tarefa:', error);
+          await saveTask(updatedTask);
         }
-      }
-    },
-    actionComplete: async function (args) {
-      if (args.requestType === 'save') {
-        console.log('Edição concluída:', args.data);
+      },
+    });
 
-        const updatedTasks = await fetchTasks();
-        this.dataSource = updatedTasks.map((task) => ({
-          TaskID: task.id,
-          TaskName: task.name,
-          StartDate: new Date(task.start_date),
-          EndDate: new Date(task.end_date),
-          Progress: task.progress || 0,
-          Status: task.status,
-        }));
-      }
-    },
+    gantt.appendTo("#GanttContainer");
+  }
 
-  });
+  async function initializeGrid() {
+    const tasks = await fetchTasks();
 
-  gantt.appendTo('#Gantt');
-}
-
-function initializeGrid(tasks) {
-  const gridData = tasks.map((task) => ({
-    id: task.id,
-    name: task.name,
-    stage: task.stage,
-    start_date: new Date(task.start_date),
-    end_date: new Date(task.end_date),
-    status: task.status,
-    progress: task.progress || 0,
-  }));
-
-  const grid = new ej.grids.Grid({
-    dataSource: gridData,
-    allowPaging: true,
-    editSettings: {
-      allowEditing: true,
-      allowAdding: true,
-      allowDeleting: true,
-      mode: 'Normal',
-    },
-    toolbar: ['Add', 'Edit', 'Delete', 'Update', 'Cancel'],
-    columns: [
-      { field: 'id', headerText: 'ID', isPrimaryKey: true, textAlign: 'center', width: 100 },
-      { field: 'name', headerText: 'Tarefa', textAlign: 'center', width: 200 },
-      { field: 'stage', headerText: 'Fase', textAlign: 'center', width: 150 },
-      { field: 'start_date', headerText: 'Data de Início', textAlign: 'center', type: 'date', format: 'yMd', width: 150, editType: 'datepickeredit' },
-      { field: 'end_date', headerText: 'Data de Término', textAlign: 'center', type: 'date', format: 'yMd', width: 150, editType: 'datepickeredit' },
-      { field: 'status', headerText: 'Status', textAlign: 'center', width: 150 },
-      { field: 'progress', headerText: 'Progresso', width: 150 },
-    ],
-    actionBegin: async function (args) {
-      if (args.requestType === 'save') {
-        try {
-          const response = await fetch('http://localhost:3000/update-task', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(args.data),
-          });
-
-          if (!response.ok) throw new Error('Erro ao atualizar tarefa');
-
-          console.log('Tarefa salva com sucesso');
-          const updatedTasks = await fetchTasks();
-          grid.dataSource = updatedTasks.map((task) => ({
-            id: task.id,
-            name: task.name,
-            stage: task.stage,
-            start_date: new Date(task.start_date),
-            end_date: new Date(task.end_date),
-            status: task.status,
-            progress: task.progress || 0,
-          }));
-        } catch (error) {
-          console.error('Erro ao salvar tarefa:', error);
+    const grid = new ej.grids.Grid({
+      dataSource: tasks,
+      height: "300px",
+      allowPaging: true,
+      pageSettings: { pageSize: 7 },
+      toolbar: ["Add", "Edit", "Delete", "Update", "Cancel"],
+      editSettings: {
+        allowEditing: true,
+        allowAdding: true,
+        allowDeleting: true,
+        mode: "Normal",
+      },
+      columns: [
+        { field: "TaskID", headerText: "ID", isPrimaryKey: true, width: 100, textAlign: "Left" },
+        { field: "TaskName", headerText: "Tarefa", width: 200, textAlign: "Left" },
+        {
+          field: "StartDate",
+          headerText: "Início",
+          type: "date",
+          format: "yMd",
+          textAlign: "Left",
+          width: 150,
+        },
+        {
+          field: "EndDate",
+          headerText: "Fim",
+          type: "date",
+          format: "yMd",
+          textAlign: "Left",
+          width: 150,
+        },
+        {
+          field: "Progress",
+          headerText: "Progresso (%)",
+          type: "number",
+          textAlign: "Left",
+          width: 150,
+        },
+        { field: "Status", headerText: "Status", textAlign: "Left", width: 150 },
+      ],
+      actionBegin: async (args) => {
+        if (args.requestType === "save") {
+          const updatedTask = {
+            id: args.data.TaskID,
+            name: args.data.TaskName,
+            start_date: args.data.StartDate,
+            end_date: args.data.EndDate,
+            progress: args.data.Progress,
+            status: args.data.Status,
+          };
+          await saveTask(updatedTask);
         }
-      }
-    },
-  });
+      },
+    });
 
-  grid.appendTo('#Grid');
-}
+    grid.appendTo("#GridContainer");
+  }
 
-fetchTasks().then((tasks) => {
-  initializeGantt(tasks);
-  initializeGrid(tasks);
+  initializeGantt();
+  initializeGrid();
 });
