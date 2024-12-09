@@ -19,7 +19,7 @@ document.addEventListener("DOMContentLoaded", () => {
       TaskName: task.name,
       StartDate: new Date(task.start_date),
       EndDate: new Date(task.end_date),
-      Progress: task.progress || 0,
+      Progress: task.progress,
       Status: task.status,
     }));
   }
@@ -32,6 +32,7 @@ document.addEventListener("DOMContentLoaded", () => {
         body: JSON.stringify(task),
       });
       if (!response.ok) throw new Error("Erro ao salvar a tarefa");
+      location.reload();
       return await response.json();
     } catch (error) {
       console.error("Erro ao salvar a tarefa:", error);
@@ -54,9 +55,10 @@ document.addEventListener("DOMContentLoaded", () => {
 
     const gantt = new ej.gantt.Gantt({
       dataSource: tasks,
-      height: "400px",
+      height: "350px",
       width: "100%",
-      rowHeight: 50,
+      toolbar: ["Add", "Edit", "Delete", "Update", "Cancel"],
+      rowHeight: 30,
       taskFields: {
         id: "TaskID",
         name: "TaskName",
@@ -70,17 +72,12 @@ document.addEventListener("DOMContentLoaded", () => {
         allowAdding: true,
         allowDeleting: true,
       },
-      timelineSettings: {
-        topTier: { unit: "Month", format: "MMM yyyy" },
-        bottomTier: { unit: "Week", format: "dd MMM" },
-      },
       highlightWeekends: true,
-      workWeek: ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"],
-      includeWeekend: false,
+      includeWeekend: true,
       gridLines: "Both",
       holidays: [
-        { from: `${currentYear}-01-01`, label: "Ano Novo", cssClass: "holiday" },
-        { from: `${currentYear}-12-31`, label: "Fim do Ano", cssClass: "holiday" },
+        { from: `${currentYear}-01-02`, label: "Ano Novo", textAlign: "center" },
+        { from: `${currentYear + 1}-01-01`, label: "Fim do Ano", textAlign: "center" },
       ],
       columns: [
         { field: "TaskID", headerText: "ID", textAlign: "Left" },
@@ -100,6 +97,7 @@ document.addEventListener("DOMContentLoaded", () => {
             progress: args.data.Progress,
             status: args.data.Status,
           };
+
           await saveTask(updatedTask);
         }
       },
@@ -114,6 +112,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const grid = new ej.grids.Grid({
       dataSource: tasks,
       height: "300px",
+      rowHeight: 30,
       allowPaging: true,
       pageSettings: { pageSize: 7 },
       toolbar: ["Add", "Edit", "Delete", "Update", "Cancel"],
@@ -122,34 +121,15 @@ document.addEventListener("DOMContentLoaded", () => {
         allowAdding: true,
         allowDeleting: true,
         mode: "Normal",
+        locale: "pt-BR",
       },
       columns: [
-        { field: "TaskID", headerText: "ID", isPrimaryKey: true, width: 100, textAlign: "Left" },
-        { field: "TaskName", headerText: "Tarefa", width: 200, textAlign: "Left" },
-        {
-          field: "StartDate",
-          headerText: "Início",
-          type: "date",
-          format: "yMd",
-          textAlign: "Left",
-          width: 150,
-        },
-        {
-          field: "EndDate",
-          headerText: "Fim",
-          type: "date",
-          format: "yMd",
-          textAlign: "Left",
-          width: 150,
-        },
-        {
-          field: "Progress",
-          headerText: "Progresso (%)",
-          type: "number",
-          textAlign: "Left",
-          width: 150,
-        },
-        { field: "Status", headerText: "Status", textAlign: "Left", width: 150 },
+        { field: "TaskID", headerText: "ID", isPrimaryKey: true, width: 30, textAlign: "Left" },
+        { field: "TaskName", headerText: "Tarefa", width: 100, textAlign: "Left" },
+        { field: "StartDate", headerText: "Início", type: "date", editType: "datepickeredit", format: "yMd", textAlign: "Left", width: 100 },
+        { field: "EndDate", editType: "datepickeredit", headerText: "Fim", type: "date", format: "yMd", textAlign: "Left", width: 100 },
+        { field: "Progress", headerText: "Progresso (%)", type: "number", textAlign: "Left", width: 100 },
+        { field: "Status", headerText: "Status", textAlign: "Left", width: 100 },
       ],
       actionBegin: async (args) => {
         if (args.requestType === "save") {
@@ -161,6 +141,7 @@ document.addEventListener("DOMContentLoaded", () => {
             progress: args.data.Progress,
             status: args.data.Status,
           };
+
           await saveTask(updatedTask);
         }
       },

@@ -11,8 +11,11 @@ h1 {
   padding: 10px 0;
 }
 
-#Gantt,
-#Grid {
-  margin: 5px auto;
-  width: 80%;
+#error-message {
+  margin-bottom: 10px;
+  display: none;
+  color: red;
 }
+
+#GridContainer,
+#GridContainer { margin-top: 20px; }
