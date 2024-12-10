@@ -1,5 +1,6 @@
 document.addEventListener("DOMContentLoaded", () => {
   const API_URL = "http://localhost:3000/tasks";
+  const SUBTASKS_API_URL = "http://localhost:3000/subtasks"; // Endpoint para subtarefas
 
   async function fetchTasks() {
     try {
@@ -9,6 +10,18 @@ document.addEventListener("DOMContentLoaded", () => {
     } catch (error) {
       console.error("Erro ao buscar tarefas:", error);
       showError("Erro ao carregar as tarefas. Tente novamente.");
+      return [];
+    }
+  }
+
+  async function fetchSubtasks(taskID) {
+    try {
+      const response = await fetch(`${SUBTASKS_API_URL}?taskID=${taskID}`);
+      const data = await response.json();
+      return mapSubtasks(data);
+    } catch (error) {
+      console.error("Erro ao buscar subtarefas:", error);
+      showError("Erro ao carregar as subtarefas. Tente novamente.");
       return [];
     }
   }
@@ -24,46 +37,67 @@ document.addEventListener("DOMContentLoaded", () => {
     }));
   }
 
+  function mapSubtasks(subtasks) {
+    return subtasks.map((subtask) => ({
+      SubtaskID: subtask.id,
+      SubtaskName: subtask.name,
+      StartDate: new Date(subtask.start_date),
+      EndDate: new Date(subtask.end_date),
+      Status: subtask.status,
+    }));
+  }
+
   async function saveTask(task) {
     try {
-      const response = await fetch(`${API_URL}`, {
+      const response = await fetch(`${API_URL}/${task.TaskID}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(task),
+        body: JSON.stringify({
+          id: task.TaskID,
+          name: task.TaskName,
+          start_date: task.StartDate.toISOString().split("T")[0],
+          end_date: task.EndDate.toISOString().split("T")[0],
+          progress: task.Progress,
+          status: task.Status,
+        }),
       });
       if (!response.ok) throw new Error("Erro ao salvar a tarefa");
-      location.reload();
-      return await response.json();
+      console.log("Tarefa editada com sucesso");
     } catch (error) {
       console.error("Erro ao salvar a tarefa:", error);
       showError("Erro ao salvar a tarefa. Tente novamente.");
     }
   }
 
-  async function saveTask(task) {
+  async function addTask(task) {
     try {
-      const response = await fetch(`${API_URL}`, {
-        method: 'PUT',
+      const response = await fetch(API_URL, {
+        method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(task),
+        body: JSON.stringify({
+          name: task.TaskName,
+          start_date: task.StartDate.toISOString().split("T")[0],
+          end_date: task.EndDate.toISOString().split("T")[0],
+          progress: task.Progress,
+          status: task.Status,
+        }),
       });
-      if (!response.ok) throw new Error("Erro ao salvar a tarefa");
-      location.reload();
-      return await response.json();
+      if (!response.ok) throw new Error("Erro ao adicionar a tarefa");
+      console.log("Tarefa adicionada com sucesso");
     } catch (error) {
-      console.error("Erro ao salvar a tarefa:", error);
-      showError("Erro ao salvar a tarefa. Tente novamente.");
+      console.error("Erro ao adicionar a tarefa:", error);
+      showError("Erro ao adicionar a tarefa. Tente novamente.");
     }
   }
 
   async function deleteTask(id) {
     try {
-      const response = await fetch(`${API_URL}`, { method: 'DELETE' });
-      if (!response.ok) throw new Error('Erro ao excluir a tarefa');
-      location.reload();
+      const response = await fetch(`${API_URL}/${id}`, { method: "DELETE" });
+      if (!response.ok) throw new Error("Erro ao excluir a tarefa");
+      console.log("Tarefa excluída com sucesso");
     } catch (error) {
-      console.error('Erro ao excluir a tarefa:', error);
-      showError('Erro ao excluir a tarefa. Tente novamente.');
+      console.error("Erro ao excluir a tarefa:", error);
+      showError("Erro ao excluir a tarefa. Tente novamente.");
     }
   }
 
@@ -76,16 +110,47 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 
+  function renderSubtasksGrid(subtasks) {
+    const gridContainer = document.getElementById("SubtasksContainer");
+    if (!gridContainer) return;
+
+    gridContainer.innerHTML = ""; // Limpa o conteúdo anterior
+
+    const grid = new ej.grids.Grid({
+      dataSource: subtasks,
+      height: "250px",
+      columns: [
+        { field: "SubtaskID", headerText: "ID", width: 100, textAlign: "Center" },
+        { field: "SubtaskName", headerText: "Subtarefa", width: 200, textAlign: "Left" },
+        { field: "StartDate", headerText: "Início", width: 150, textAlign: "Left" },
+        { field: "EndDate", headerText: "Fim", width: 150, textAlign: "Left" },
+        { field: "Status", headerText: "Status", width: 150, textAlign: "Center" },
+      ],
+    });
+
+    grid.appendTo(gridContainer);
+  }
+
   async function initializeGantt() {
     const tasks = await fetchTasks();
-    const currentYear = new Date().getFullYear();
+    const today = new Date();
+
+    const day = today.getDate();
+    const month = today.getMonth() + 1;
+    const year = today.getFullYear();
+
+    // if (month >= 10) {
+    //   month -= 9; // Subtrai 9 do mês
+    //   year += 1;  // Adiciona 1 ao ano
+    // }
 
     const gantt = new ej.gantt.Gantt({
       dataSource: tasks,
-      height: "350px",
+      height: "300px",
       width: "100%",
       toolbar: ["Add", "Edit", "Delete", "Update", "Cancel"],
       rowHeight: 30,
+      allowResizing: false,
       taskFields: {
         id: "TaskID",
         name: "TaskName",
@@ -94,29 +159,38 @@ document.addEventListener("DOMContentLoaded", () => {
         progress: "Progress",
         status: "Status",
       },
+      // holidays: [
+      //   { from: formatDate(year - 1, month - 3, day), label: "Início" },  // 3 meses antes
+      //   { from: formatDate(year, month + 3, day), label: "Fim" },  // 3 meses depois
+      // ],
       editSettings: {
         allowEditing: true,
         allowAdding: true,
         allowDeleting: true,
       },
+      actionComplete: async (args) => {
+        if (args.requestType === "save") {
+          if (args.action === "add") {
+            await addTask(args.data);
+          } else if (args.action === "edit") {
+            await saveTask(args.data);
+          }
+        } else if (args.requestType === "delete") {
+          const taskId = args.data[0].TaskID;
+          await deleteTask(taskId);
+        }
+      },
+      rowSelected: async (args) => {
+        const selectedTask = args.data;
+        if (selectedTask && selectedTask.TaskID) {
+          const subtasks = await fetchSubtasks(selectedTask.TaskID);
+          renderSubtasksGrid(subtasks);
+        }
+      },
       highlightWeekends: true,
       includeWeekend: true,
+      workingDays: [1, 2, 3, 4, 5],
       gridLines: "Both",
-      holidays: [
-        { from: `${currentYear - 1}-12-26`, label: "Natal" },
-        { from: `${currentYear}-01-01`, label: "Fim do Ano" },
-        { from: `${currentYear}-01-02`, label: "Ano Novo" },
-        { from: `${currentYear}-04-01`, label: "Páscoa" },
-        { from: `${currentYear}-04-22`, label: "Tiradentes" },
-        { from: `${currentYear}-05-02`, label: "Dia do Trabalho" },
-        { from: `${currentYear}-09-08`, label: "Independência do Brasil" },
-        { from: `${currentYear}-10-13`, label: "Nossa Senhora Aparecida" },
-        { from: `${currentYear}-11-03`, label: "Finados" },
-        { from: `${currentYear}-11-16`, label: "Proclamação da República" },
-        { from: `${currentYear}-12-26`, label: "Natal" },
-        { from: `${currentYear + 1}-01-01`, label: "Fim do Ano" },
-        { from: `${currentYear + 1}-01-02`, label: "Ano Novo" },
-      ],
       columns: [
         { field: "TaskID", headerText: "ID", textAlign: "Left" },
         { field: "TaskName", headerText: "Tarefa", textAlign: "Left" },
@@ -125,97 +199,10 @@ document.addEventListener("DOMContentLoaded", () => {
         { field: "Progress", headerText: "Progresso (%)", textAlign: "Left" },
         { field: "Status", headerText: "Status", textAlign: "Left" },
       ],
-      actionBegin: async (args) => {
-        if (args.requestType === "save") {
-          const updatedTask = {
-            id: args.data.TaskID,
-            name: args.data.TaskName,
-            start_date: args.data.StartDate,
-            end_date: args.data.EndDate,
-            progress: args.data.Progress,
-            status: args.data.Status,
-          };
-
-          await saveTask(updatedTask);
-        } else if (args.requestType === "add") {
-          const newTask = {
-            name: args.data.TaskName,
-            start_date: args.data.StartDate,
-            end_date: args.data.EndDate,
-            progress: args.data.Progress || 0,
-            status: args.data.Status || "New",
-          };
-
-          await addTask(newTask);
-        } else if (args.requestType === "delete") {
-          const taskId = args.data[0].TaskID;
-
-          await deleteTask(taskId);
-        }
-      },
     });
 
     gantt.appendTo("#GanttContainer");
   }
 
-  async function initializeGrid() {
-    const tasks = await fetchTasks();
-
-    const grid = new ej.grids.Grid({
-      dataSource: tasks,
-      height: "300px",
-      rowHeight: 30,
-      allowPaging: true,
-      pageSettings: { pageSize: 7 },
-      toolbar: ["Add", "Edit", "Delete", "Update", "Cancel"],
-      editSettings: {
-        allowEditing: true,
-        allowAdding: true,
-        allowDeleting: true,
-        mode: "Normal",
-        locale: "pt-BR",
-      },
-      columns: [
-        { field: "TaskID", headerText: "ID", isPrimaryKey: true, width: 30, textAlign: "Left" },
-        { field: "TaskName", headerText: "Tarefa", width: 100, textAlign: "Left" },
-        { field: "StartDate", headerText: "Início", type: "date", editType: "datepickeredit", format: "yMd", textAlign: "Left", width: 100 },
-        { field: "EndDate", editType: "datepickeredit", headerText: "Fim", type: "date", format: "yMd", textAlign: "Left", width: 100 },
-        { field: "Progress", headerText: "Progresso (%)", type: "number", textAlign: "Left", width: 100 },
-        { field: "Status", headerText: "Status", textAlign: "Left", width: 100 },
-      ],
-      actionBegin: async (args) => {
-        if (args.requestType === "save") {
-          const updatedTask = {
-            id: args.data.TaskID,
-            name: args.data.TaskName,
-            start_date: args.data.StartDate,
-            end_date: args.data.EndDate,
-            progress: args.data.Progress,
-            status: args.data.Status,
-          };
-
-          await saveTask(updatedTask);
-        } else if (args.requestType === "add") {
-          const newTask = {
-            name: args.data.TaskName,
-            start_date: args.data.StartDate,
-            end_date: args.data.EndDate,
-            progress: args.data.Progress || 0,
-            status: args.data.Status || "New",
-          };
-
-          await addTask(newTask);
-        } else if (args.requestType === "delete") {
-          const taskId = args.data[0].TaskID;
-
-          await deleteTask(taskId);
-        }
-      },
-    });
-
-    grid.appendTo("#GridContainer");
-  }
-
   initializeGantt();
-  initializeGrid();
 });

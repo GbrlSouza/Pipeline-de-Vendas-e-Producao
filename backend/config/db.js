@@ -5,4 +5,5 @@ const db = mysql.createConnection({
   password: '',
   database: 'pipeline_db',
 });
+
 module.exports = db;
