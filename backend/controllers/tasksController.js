@@ -22,9 +22,22 @@ exports.updateTask = (req, res) => {
   taskModel.updateTask(taskId, taskData, (err, result) => {
     if (err) {
       console.error("Erro ao atualizar tarefa:", err);
-      return res.status(500).json({ error: 'Erro ao atualizar tarefa' }); 
+      return res.status(500).json({ error: 'Erro ao atualizar tarefa' });
     }
-    if (result.affectedRows === 0) { return res.status(404).json({ error: 'Tarefa não encontrada' }); }
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ error: 'Tarefa não encontrada' });
+    }
     res.json({ message: 'Tarefa atualizada com sucesso' });
+  });
+};
+
+exports.deleteTask = (req, res) => {
+  const taskId = req.params.id;
+  taskModel.deleteTask(taskId, (err, result) => {
+    if (err) return res.status(500).json({ error: 'Erro ao excluir a tarefa' });
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ error: 'Tarefa não encontrada' });
+    }
+    res.json({ message: 'Tarefa excluída com sucesso' });
   });
 };

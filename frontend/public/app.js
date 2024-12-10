@@ -26,7 +26,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   async function saveTask(task) {
     try {
-      const response = await fetch(API_URL, {
+      const response = await fetch(`${API_URL}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(task),
@@ -37,6 +37,33 @@ document.addEventListener("DOMContentLoaded", () => {
     } catch (error) {
       console.error("Erro ao salvar a tarefa:", error);
       showError("Erro ao salvar a tarefa. Tente novamente.");
+    }
+  }
+
+  async function saveTask(task) {
+    try {
+      const response = await fetch(`${API_URL}`, {
+        method: 'PUT',
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(task),
+      });
+      if (!response.ok) throw new Error("Erro ao salvar a tarefa");
+      location.reload();
+      return await response.json();
+    } catch (error) {
+      console.error("Erro ao salvar a tarefa:", error);
+      showError("Erro ao salvar a tarefa. Tente novamente.");
+    }
+  }
+
+  async function deleteTask(id) {
+    try {
+      const response = await fetch(`${API_URL}`, { method: 'DELETE' });
+      if (!response.ok) throw new Error('Erro ao excluir a tarefa');
+      location.reload();
+    } catch (error) {
+      console.error('Erro ao excluir a tarefa:', error);
+      showError('Erro ao excluir a tarefa. Tente novamente.');
     }
   }
 
@@ -76,8 +103,19 @@ document.addEventListener("DOMContentLoaded", () => {
       includeWeekend: true,
       gridLines: "Both",
       holidays: [
-        { from: `${currentYear}-01-02`, label: "Ano Novo", textAlign: "center" },
-        { from: `${currentYear + 1}-01-01`, label: "Fim do Ano", textAlign: "center" },
+        { from: `${currentYear - 1}-12-26`, label: "Natal" },
+        { from: `${currentYear}-01-01`, label: "Fim do Ano" },
+        { from: `${currentYear}-01-02`, label: "Ano Novo" },
+        { from: `${currentYear}-04-01`, label: "Páscoa" },
+        { from: `${currentYear}-04-22`, label: "Tiradentes" },
+        { from: `${currentYear}-05-02`, label: "Dia do Trabalho" },
+        { from: `${currentYear}-09-08`, label: "Independência do Brasil" },
+        { from: `${currentYear}-10-13`, label: "Nossa Senhora Aparecida" },
+        { from: `${currentYear}-11-03`, label: "Finados" },
+        { from: `${currentYear}-11-16`, label: "Proclamação da República" },
+        { from: `${currentYear}-12-26`, label: "Natal" },
+        { from: `${currentYear + 1}-01-01`, label: "Fim do Ano" },
+        { from: `${currentYear + 1}-01-02`, label: "Ano Novo" },
       ],
       columns: [
         { field: "TaskID", headerText: "ID", textAlign: "Left" },
@@ -99,6 +137,20 @@ document.addEventListener("DOMContentLoaded", () => {
           };
 
           await saveTask(updatedTask);
+        } else if (args.requestType === "add") {
+          const newTask = {
+            name: args.data.TaskName,
+            start_date: args.data.StartDate,
+            end_date: args.data.EndDate,
+            progress: args.data.Progress || 0,
+            status: args.data.Status || "New",
+          };
+
+          await addTask(newTask);
+        } else if (args.requestType === "delete") {
+          const taskId = args.data[0].TaskID;
+
+          await deleteTask(taskId);
         }
       },
     });
@@ -143,6 +195,20 @@ document.addEventListener("DOMContentLoaded", () => {
           };
 
           await saveTask(updatedTask);
+        } else if (args.requestType === "add") {
+          const newTask = {
+            name: args.data.TaskName,
+            start_date: args.data.StartDate,
+            end_date: args.data.EndDate,
+            progress: args.data.Progress || 0,
+            status: args.data.Status || "New",
+          };
+
+          await addTask(newTask);
+        } else if (args.requestType === "delete") {
+          const taskId = args.data[0].TaskID;
+
+          await deleteTask(taskId);
         }
       },
     });
