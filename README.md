@@ -3,6 +3,10 @@
 - Localhost | PHPMyAdmin | XAMPP
 
 ```mysql
+CREATE DATABASE IF NOT EXISTS pipeline_db;
+
+USE pipeline_db;
+
 CREATE TABLE tasks (
     id INT AUTO_INCREMENT PRIMARY KEY,
     name VARCHAR(255) NOT NULL,
@@ -10,13 +14,14 @@ CREATE TABLE tasks (
     start_date DATE NOT NULL,
     end_date DATE NOT NULL,
     status ENUM('Pendente', 'Em Andamento', 'Concluído') DEFAULT 'Pendente',
-    progress DECIMAL(5, 2)
+    progress DECIMAL(5, 2),
+    predecessor VARCHAR(255) DEFAULT NULL  -- Coluna para dependência
 );
 
-INSERT INTO tasks (task_name, stage, start_date, end_date, status)
+INSERT INTO tasks (name, stage, start_date, end_date, status, predecessor)
 VALUES 
-('Contato inicial', 'Prospecção', '2024-12-01', '2024-12-03', 'Pendente', 80),
-('Negociação de contrato', 'Negociação', '2024-12-04', '2024-12-05', 'Em Andamento', 60);
+('Contato inicial', 'Prospecção', '2024-12-01', '2024-12-03', 'Pendente', 80, NULL),
+('Negociação de contrato', 'Negociação', '2024-12-04', '2024-12-05', 'Em Andamento', 60, '1FS');
 ```
 
 - Estrutura do projeto
