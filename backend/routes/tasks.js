@@ -4,7 +4,7 @@ const router = express.Router();
 
 router.post('/', tasksController.addTask);
 router.get('/', tasksController.getTasks);
-router.put('/', tasksController.updateTask);
-router.delete('/', tasksController.deleteTask);
+router.put('/:id', tasksController.updateTask);
+router.delete('/:id', tasksController.deleteTask);
 
 module.exports = router;
