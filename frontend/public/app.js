@@ -36,6 +36,7 @@ document.addEventListener("DOMContentLoaded", () => {
         EndDate: new Date(task.end_date),
         Progress: task.progress,
         Status: task.status,
+        Predecessor: task.predecessor,
       };
     }).filter(Boolean);
   }
@@ -83,8 +84,9 @@ document.addEventListener("DOMContentLoaded", () => {
       if (!response.ok) throw new Error(`Erro ao adicionar a tarefa. Status: ${response.status}`);
 
       const updatedTasks = await fetchTasks();
+      updatedTasks.push(task);
       configureGantt(updatedTasks);
-
+      gantt.dataSource = updatedTasks;
       console.log("Tarefa adicionada com sucesso:", task);
     } catch (error) {
       console.error("Erro ao adicionar a tarefa:", error);
@@ -124,13 +126,19 @@ document.addEventListener("DOMContentLoaded", () => {
 
     const gantt = new ej.gantt.Gantt({
       dataSource: tasks,
-      height: "400px",
+      height: "500px",
       width: "100%",
-      rowHeight: 30,
-      allowResizing: false,
+      rowHeight: 40,
+      allowResizing: true,
+      allowSelection: true,
+      highlightWeekends: true,
       toolbar: ["Search", "ExcelExport", "PdfExport", "CsvExport", "Add", "Edit", "Delete", "Update", "Cancel"],
       allowExcelExport: true,
       allowPdfExport: true,
+      allowCsvExport: true,
+      enableMultiTaskbar: true,
+      showOverAllocation: true,
+      taskType: 'FixedWork',
       taskFields: {
         id: "TaskID",
         name: "TaskName",
@@ -140,6 +148,16 @@ document.addEventListener("DOMContentLoaded", () => {
         status: "Status",
         dependency: "Predecessor"
       },
+      resourceFields: {
+        id: 'resourceId',
+        name: 'resourceName',
+        unit: 'resourceUnit',
+        group: 'resourceGroup'
+      },
+      workUnit: 'Hour',
+      labelSettings: { taskLabel: 'TaskName' },
+      splitterSettings: { columnIndex: 2 },
+      treeColumnIndex: 1,
       selectionSettings: { mode: "Row", type: "Single" },
       allowFiltering: true,
       filterSettings: { type: "Menu" },
@@ -157,6 +175,8 @@ document.addEventListener("DOMContentLoaded", () => {
         allowEditing: true,
         allowAdding: true,
         allowDeleting: true,
+        allowTaskbarEditing: true,
+        showDeleteConfirmDialog: true
       },
       actionBegin: async (args) => handleActionComplete(args, gantt),
       columns: [
@@ -165,11 +185,18 @@ document.addEventListener("DOMContentLoaded", () => {
         { field: "StartDate", headerText: "Início", width: 150, textAlign: "Left" },
         { field: "EndDate", headerText: "Fim", width: 150, textAlign: "Left" },
         { field: "Progress", headerText: "Progresso (%)", width: 100, textAlign: "left" },
+        { field: 'Predecessor', headerText: "Depende de", width: 100, textAlign: "left" },
         { field: "Status", headerText: "Status", width: 150, textAlign: "Left" },
       ],
     });
 
     gantt.appendTo("#GanttContainer");
+
+    gantt.toolbarClick = function (args) {
+      if (args.item.id === "Gantt_excelexport") { gantt.excelExport(); }
+      else if (args.item.id === "Gantt_pdfexport") { gantt.pdfExport(); }
+      else if (args.item.id === "Gantt_csvexport") { gantt.csvExport(); }
+    };
   }
 
   let isProcessing = false, count = 0;
