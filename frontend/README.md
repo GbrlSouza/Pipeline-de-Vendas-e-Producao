@@ -1,4 +1,4 @@
-**Explicação do arq. App.js**
+# **Explicação do arq. App.js**
 
 ### 1. **Primeiro, o bagulho começa aqui:**
 O código tá rodando um evento `DOMContentLoaded`, ou seja, só vai começar a trampar depois que o HTML da página tiver carregado. Isso é tipo esperar o pão de queijo sair do forno antes de comer.
