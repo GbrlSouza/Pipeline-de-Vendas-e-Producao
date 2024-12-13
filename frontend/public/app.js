@@ -126,7 +126,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     const gantt = new ej.gantt.Gantt({
       dataSource: tasks,
-      height: "500px",
+      height: "400px",
       width: "100%",
       rowHeight: 40,
       allowResizing: true,
@@ -172,11 +172,22 @@ document.addEventListener("DOMContentLoaded", () => {
         { from: `${currentYear + 1}-01-01`, label: "Fim do Ano" },
       ],
       editSettings: {
-        allowEditing: true,
         allowAdding: true,
+        allowEditing: true,
         allowDeleting: true,
+        allowFiltering: true,
         allowTaskbarEditing: true,
-        showDeleteConfirmDialog: true
+        showDeleteConfirmDialog: true,
+        fields: {
+          Status: {
+            type: "Dropdown",
+            params: {
+              dataSource: ["Not Started", "In Progress", "Completed", "On Hold"],
+              placeholder: "Selecione o Status",
+              allowFiltering: true,
+            }
+          }
+        }
       },
       actionBegin: async (args) => handleActionComplete(args, gantt),
       columns: [
@@ -186,7 +197,15 @@ document.addEventListener("DOMContentLoaded", () => {
         { field: "EndDate", headerText: "Fim", width: 150, textAlign: "Left", padding: 0 },
         { field: "Progress", headerText: "Progresso (%)", width: 100, textAlign: "left", padding: 0 },
         { field: 'Predecessor', headerText: "Depende de", width: 100, textAlign: "left", padding: 0 },
-        { field: "Status", headerText: "Status", width: 150, textAlign: "Left", padding: 0 },
+        { field: "Status", headerText: "Status", width: 150, textAlign: "Left", padding: 0, editType: "dropdownedit",
+          edit: {
+            params: {
+              dataSource: ["Not Started", "In Progress", "Completed", "On Hold"],
+              allowFiltering: true,
+              placeholder: "Selecione o Status"
+            }
+          }
+        },
       ],
     });
 
