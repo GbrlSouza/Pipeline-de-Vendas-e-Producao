@@ -180,13 +180,13 @@ document.addEventListener("DOMContentLoaded", () => {
       },
       actionBegin: async (args) => handleActionComplete(args, gantt),
       columns: [
-        { field: "TaskID", headerText: "ID", width: 70, textAlign: "Left" },
-        { field: "TaskName", headerText: "Tarefa", width: 200, textAlign: "Left" },
-        { field: "StartDate", headerText: "Início", width: 150, textAlign: "Left" },
-        { field: "EndDate", headerText: "Fim", width: 150, textAlign: "Left" },
-        { field: "Progress", headerText: "Progresso (%)", width: 100, textAlign: "left" },
-        { field: 'Predecessor', headerText: "Depende de", width: 100, textAlign: "left" },
-        { field: "Status", headerText: "Status", width: 150, textAlign: "Left" },
+        { field: "TaskID", headerText: "ID", width: 70, textAlign: "Left", padding: 0 },
+        { field: "TaskName", headerText: "Tarefa", width: 200, textAlign: "Left", padding: 0 },
+        { field: "StartDate", headerText: "Início", width: 150, textAlign: "Left", padding: 0 },
+        { field: "EndDate", headerText: "Fim", width: 150, textAlign: "Left", padding: 0 },
+        { field: "Progress", headerText: "Progresso (%)", width: 100, textAlign: "left", padding: 0 },
+        { field: 'Predecessor', headerText: "Depende de", width: 100, textAlign: "left", padding: 0 },
+        { field: "Status", headerText: "Status", width: 150, textAlign: "Left", padding: 0 },
       ],
     });
 
